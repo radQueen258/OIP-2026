@@ -4,7 +4,7 @@ import requests
 
 URLS_FILE = "/content/links.txt"
 OUTPUT_DIR = "/content/sample_data/pages"
-INDEX_FILE = "/content/index.txt"
+INDEX_FILE = "/content/source.txt"
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (compatible; ColabCrawler/1.0)"
