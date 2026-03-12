@@ -9,20 +9,52 @@ def load_index():
         return json.load(f)
 
 
-def tokenize_query(query):
-    tokens = re.findall(r'\w+|AND|OR|NOT|\(|\)', query)
-    return tokens
+def get_all_docs(index):
+    docs = set()
+    for d in index.values():
+        docs.update(d)
+    return docs
 
 
-def search(query, index):
-    tokens = tokenize_query(query)
+def tokenize(query):
+    return re.findall(r'\(|\)|AND|OR|NOT|\w+', query)
+
+
+def to_postfix(tokens):
+    precedence = {"NOT": 3, "AND": 2, "OR": 1}
+    output = []
     stack = []
 
-    all_docs = set()
-    for docs in index.values():
-        all_docs.update(docs)
-
     for token in tokens:
+        if token not in ("AND", "OR", "NOT", "(", ")"):
+            output.append(token)
+
+        elif token == "(":
+            stack.append(token)
+
+        elif token == ")":
+            while stack and stack[-1] != "(":
+                output.append(stack.pop())
+            stack.pop()
+
+        else:
+            while (stack and stack[-1] != "(" and
+                   precedence.get(stack[-1], 0) >= precedence[token]):
+                output.append(stack.pop())
+            stack.append(token)
+
+    while stack:
+        output.append(stack.pop())
+
+    return output
+
+
+def evaluate(postfix, index):
+
+    all_docs = get_all_docs(index)
+    stack = []
+
+    for token in postfix:
 
         if token == "AND":
             b = stack.pop()
@@ -38,14 +70,20 @@ def search(query, index):
             a = stack.pop()
             stack.append(all_docs - a)
 
-        elif token not in ["(", ")"]:
-            docs = set(index.get(token.lower(), []))
-            stack.append(docs)
+        else:
+            stack.append(set(index.get(token.lower(), [])))
 
     return stack.pop()
 
 
+def search(query, index):
+    tokens = tokenize(query)
+    postfix = to_postfix(tokens)
+    return evaluate(postfix, index)
+
+
 def main():
+
     index = load_index()
 
     query = input("Enter query: ")
