@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search Engine</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fa;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            margin-top: 80px;
+            font-size: 36px;
+        }
+
+        .search-box {
+            margin-top: 30px;
+        }
+
+        input {
+            width: 400px;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 25px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #007BFF;
+        }
+
+        button {
+            padding: 12px 20px;
+            margin-left: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 25px;
+            background: #740d9e;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        #results {
+            margin-top: 40px;
+            width: 60%;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: left;
+        }
+
+        .result-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .doc-id {
+            font-weight: bold;
+            color: #007BFF;
+        }
+
+        .score {
+            color: #555;
+            font-size: 14px;
+        }
+
+        .no-results {
+            text-align: center;
+            color: #888;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>My Search Engine</h1>
+
+<div class="search-box">
+    <input type="text" id="query" placeholder="Type your query..." onkeypress="handleKey(event)">
+    <button onclick="search()">Search</button>
+</div>
+
+<div id="results"></div>
+
+<script>
+function handleKey(event) {
+    if (event.key === "Enter") {
+        search();
+    }
+}
+
+function search() {
+    let q = document.getElementById("query").value;
+    let resultsDiv = document.getElementById("results");
+
+    if (!q.trim()) return;
+
+    resultsDiv.innerHTML = "<p>Searching...</p>";
+
+    fetch("http://127.0.0.1:5000/search?q=" + encodeURIComponent(q))
+        .then(res => res.json())
+        .then(data => {
+            resultsDiv.innerHTML = "";
+
+            if (data.length === 0) {
+                resultsDiv.innerHTML = "<p class='no-results'>No results found 😢</p>";
+                return;
+            }
+
+            data.forEach(item => {
+                let div = document.createElement("div");
+                div.className = "result-item";
+
+                div.innerHTML = `
+                    <div class="doc-id">Document ${item.doc}</div>
+                    <div class="score">Score: ${item.score.toFixed(4)}</div>
+                `;
+
+                resultsDiv.appendChild(div);
+            });
+        })
+        .catch(err => {
+            resultsDiv.innerHTML = "<p class='no-results'>Error connecting to server</p>";
+            console.error(err);
+        });
+}
+</script>
+
+</body>
+</html>
